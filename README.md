@@ -118,33 +118,7 @@ These combine all the non-meeting intents into one action. For simplicity, the s
 
 ---
 
-## 5. **Folder Structure**
-
-```
-n8n-email-automation/
-│
-├── workflows/
-│   ├── email-auto-responder.json
-│   ├── scheduler.json
-│
-├── templates/
-│   ├── appointment_reply.md
-│   ├── follow_up_request.md
-│   └── non_appointment_reply.md
-│
-├── config/
-│   └── .env.example
-│
-├── logs/
-│   └── audit_log.csv
-│
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-## 6. **Additional Notes**
+## 5. **Additional Notes**
 
 * **OpenRouter Model**: The free tier of **Z.ai GLM 4.5 Air** has a **request rate limit**. Be mindful of this during heavy usage.
 * The **n8n instance** is local by default. To deploy it to a production environment, you can follow Docker deployment instructions, or use services like **AWS** or **DigitalOcean** for hosting.
