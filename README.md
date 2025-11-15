@@ -1,5 +1,3 @@
-Sure! Here’s a **clean version of the README.md** **without** code snippets for direct copying, just with descriptions and steps for you to customize:
-
 ---
 
 # **Email Auto-Responder & Scheduler**
