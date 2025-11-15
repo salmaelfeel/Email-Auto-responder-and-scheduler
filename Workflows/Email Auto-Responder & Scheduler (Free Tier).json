@@ -1,0 +1,470 @@
+{
+  "name": "Email Auto-Responder & Scheduler (Free Tier)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Check if incoming email is about appointment\nWe use LLM to check subject and body of the email and determine if it's an appointment request. ",
+        "height": 746,
+        "width": 873
+      },
+      "id": "eaa31cde-3017-400d-aac8-999def8cc227",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -48,
+        -144
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "bf154384-274a-4cdd-977d-890220948a9d",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        32,
+        176
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXmGFQ5oQRuCKhEp",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.snippet }}",
+        "options": {
+          "systemMessage": "## Overview\nYou are an auto email responder and scheduler. Your job is to detect the intent of every incoming email and perform a strict sequence of actions. The current date and time is {{ $now.toString() }}\n\n## Tools\n- Google Sheets (Append email): Save email metadata, intent, confidence, and raw content\n- Google Calendar (Get availability): Check if the requested meeting time is free\n- Google Calendar (Create an event): Schedule a meeting using start and end time\n- Gmail (Reply to a message): Send a formal confirmation reply only if meeting is scheduled\n  - Required:\n    - Message: Formal reply text confirming the meeting\n    - Message ID: ID of the original email message to reply to\n    - Email Type: \"Text\"\n- Gmail (Mark a message as read): Marks the email as read after all actions are completed\n\n## Rules\n- Always process and append **every** email\n- Classify emails into one of five intents:\n  ▪ General Inquiry  \n  ▪ Support Request  \n  ▪ Meeting Request  \n  ▪ Spam/Marketing  \n  ▪ Out-of-Office / Auto-Reply\n- Maintain a formal tone in all replies\n- Meetings are scheduled **only if the requested time is available**\n- The reply tool must only be used after scheduling succeeds\n\n## Execution Order\nYou MUST follow this sequence exactly:\n1) Classify the email and determine the intent with confidence\n2) Append all email details to Google Sheets:\n   sender, subject, timestamp, thread ID, intent, confidence, action, raw content\n3) If intent is \"Meeting Request\":\n   a. Check availability in Google Calendar  \n   b. If available:  \n      - Schedule event with start and end time  \n      - Send reply using:\n        • Message (reply text)  \n        • Message ID (from original email)  \n4) Mark the email as read\n\n## Examples\n1)\nInput: \"Hi, can we meet tomorrow at 2pm?\"\n- Execution:\n  1. Classify as \"Meeting Request\"\n  2. Append to Google Sheets\n  3. Check Google Calendar → Available\n  4. Schedule event\n  5. Reply with:\n     - Message: \"Your meeting is confirmed for tomorrow at 2pm.\"\n     - Message ID: \"19a870db8ddf4e6\"\n  6. Mark email as read\n\n2)\nInput: \"Hello, I need help with my account settings.\"\n- Execution:\n  1. Classify as \"Support Request\"\n  2. Append to Google Sheets\n  3. No availability check\n  4. No reply\n  5. Mark email as read"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        224,
+        176
+      ],
+      "id": "2d35bb8a-f33a-419d-ba20-72bd74eac891",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Schedules a new calendar event when a meeting request is detected and the requested time slot is available.\nParameters:\n\nStart Time: The exact datetime when the meeting should begin.\n\nEnd Time: The exact datetime when the meeting should end.\nThis tool is used only after verifying availability and ensures that meetings are properly scheduled without conflicts.",
+        "calendar": {
+          "__rl": true,
+          "value": "salmabasem2020@gmail.com",
+          "mode": "list",
+          "cachedResultName": "salmabasem2020@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        16
+      ],
+      "id": "921ed8ab-d12a-431c-8a80-fd6ae4c03551",
+      "name": "Create an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "3kHVSurw0vp6Mq8z",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Sends a formal confirmation reply to the original email only if the requested meeting time is available. This reply confirms the scheduled meeting and continues the same email thread.\nParameters:\n\nMessage: The reply content to be sent, written in a formal tone and tailored to the meeting intent.\n\nMessage ID: The ID of the specific email message to reply to, ensuring the response is threaded correctly.",
+        "operation": "reply",
+        "messageId": "={{ $json.id }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        16
+      ],
+      "id": "afdcc7a4-7324-49bb-8490-576c2b6b88c5",
+      "name": "Reply to a message in Gmail",
+      "webhookId": "ae3ee8e4-0673-408d-8d95-5d3ca8f741fd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXmGFQ5oQRuCKhEp",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Checks availability in a specified Google Calendar for a given time range. Takes start time and end time as input parameters to determine if the calendar is free or busy. Use this to avoid scheduling conflicts before creating new events.",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "salmabasem2020@gmail.com",
+          "mode": "list",
+          "cachedResultName": "salmabasem2020@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        144
+      ],
+      "id": "dbf5995c-0dca-46f8-9206-109a3f3e76c9",
+      "name": "Get availability of meeting in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "3kHVSurw0vp6Mq8z",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Logs processed emails with:\nsender, subject, timestamp, thread ID, intent, confidence, action, and raw content.\nEnsures deduplication using Message-ID.",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "15ExY4d_FCIpDFYgsw6Z_DN5jXSy79xe08i-wgL8maMM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "sender": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('sender', ``, 'string') }}",
+            "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('subject', ``, 'string') }}",
+            " timestamp": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('_timestamp', ``, 'string') }}",
+            "thread ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('thread_ID', ``, 'string') }}",
+            "intent": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('intent', ``, 'string') }}",
+            "confidence": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('confidence', ``, 'string') }}",
+            "action": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('action', ``, 'string') }}",
+            "raw content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('raw_content', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "sender",
+              "displayName": "sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " timestamp",
+              "displayName": " timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "thread ID",
+              "displayName": "thread ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "raw content",
+              "displayName": "raw content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        368,
+        336
+      ],
+      "id": "a937028e-0c5c-4b10-8ac2-fb57693c2aaa",
+      "name": "Append email in google sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7QaS4X3k5VmXaDgI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Updates the status of the processed email to “read” to prevent reprocessing and indicate completion of handling.",
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        48
+      ],
+      "id": "fc02547d-1880-4f9a-a099-954b266814b6",
+      "name": "Mark a message as read in Gmail",
+      "webhookId": "c0cfb516-5c98-4bc8-9c92-1c2cfa922fd1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXmGFQ5oQRuCKhEp",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-exp:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        704
+      ],
+      "id": "b4f9305a-1c7f-4482-929e-0d069de4e23b",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "bfAhLkeEIMWSySPB",
+          "name": "OpenRouter account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        400
+      ],
+      "id": "4921c6ba-685e-4fe0-80cd-2a5f35406bbd",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "GlRjSjyttagFIOz2",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        224,
+        352
+      ],
+      "id": "a307f50c-dd55-439d-9b6f-12e2f765c8c4",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "P99oC1i5WDzhSRve",
+          "name": "OpenRouter account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Create an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability of meeting in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append email in google sheet": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark a message as read in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df58938b-7be1-4a26-8f7b-b9a0f1d008c9",
+  "meta": {
+    "templateId": "1953",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33a1254eaacaf76100c1a595222dd9a7a9706801fe2b5df0a4f7d9608c47bd5a"
+  },
+  "id": "oJehsJ36yi3MWPav",
+  "tags": []
+}

@@ -1,0 +1,20 @@
+1)
+Input: "Hi, can we meet tomorrow at 2pm?"
+- Execution:
+  1. Classify as "Meeting Request"
+  2. Append to Google Sheets
+  3. Check Google Calendar → Available
+  4. Schedule event
+  5. Reply with:
+     - Message: "Your meeting is confirmed for tomorrow at 2pm."
+     - Message ID: "19a870db8ddf4e6"
+  6. Mark email as read
+
+2)
+Input: "Hello, I need help with my account settings."
+- Execution:
+  1. Classify as "Support Request"
+  2. Append to Google Sheets
+  3. No availability check
+  4. No reply
+  5. Mark email as read
