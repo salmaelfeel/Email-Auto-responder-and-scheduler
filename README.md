@@ -69,30 +69,28 @@ To enable **Gmail**, **Google Calendar**, and **Google Sheets** access, follow t
 
 ### **Short Examples of Each Intent:**
 
-1. **Meeting Request:**
+Meeting Request:
 
-   * **Input**: "Can we meet tomorrow at 2 PM UTC?"
-   * **Action**: The AI model classifies the email as a "Meeting Request", checks availability in Google Calendar, and schedules the meeting if available. A formal reply is sent to confirm the meeting.
+Input: "Can we meet tomorrow at 2 PM UTC?"
 
-2. **General Inquiry:**
+Action: The AI model classifies the email as a "Meeting Request". It checks availability in Google Calendar, and if the time is available, it schedules the meeting and sends a confirmation reply.
 
-   * **Input**: "Can you help me with my account settings?"
-   * **Action**: The email is classified as "General Inquiry" and logged to Google Sheets. No reply is sent.
+General Inquiry / Support Request / Spam / Out-of-Office:
 
-3. **Support Request:**
+Input: (General Inquiry) "Can you help me with my account settings?"
+(Support Request) "I need assistance with my billing issue."
+(Spam/Marketing) "Get 50% off your next purchase!"
+(Out-of-Office) "I'm currently out of the office."
 
-   * **Input**: "I need assistance with my billing issue."
-   * **Action**: The email is classified as "Support Request" and logged to Google Sheets. No reply is sent.
+Action:
 
-4. **Spam/Marketing:**
+The email is logged to Google Sheets.
 
-   * **Input**: "Get 50% off your next purchase! Visit our store."
-   * **Action**: The email is classified as "Spam/Marketing" and logged to Google Sheets. No reply is sent.
+The email is marked as read.
 
-5. **Out-of-Office / Auto-Reply:**
+No reply is sent, as the email is not classified as a "Meeting Request".
 
-   * **Input**: "I’m currently out of the office and will reply when I return."
-   * **Action**: The email is classified as "Out-of-Office", logged to Google Sheets, and marked as read.
+These combine all the non-meeting intents into one action. For simplicity, the system logs the email and marks it as read without any further action. The Meeting Request intent triggers the full scheduling and replying process.
 
 ---
 
